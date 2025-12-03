@@ -33,8 +33,8 @@ Crowdsourced visual data collection platform backend API.
 ### 1. Clone the repository
 
 ```bash
-git clone <your-repo-url>
-cd visual-data-platform-api
+git clone https://github.com/datapixora/DataSet.git
+cd DataSet
 ```
 
 ### 2. Install dependencies
@@ -136,7 +136,7 @@ The API will be available at `http://localhost:3000`
 git init
 git add .
 git commit -m "Initial commit"
-git remote add origin <your-github-repo-url>
+git remote add origin https://github.com/datapixora/DataSet.git
 git push -u origin main
 ```
 
