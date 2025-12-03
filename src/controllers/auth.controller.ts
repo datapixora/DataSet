@@ -61,7 +61,7 @@ export class AuthController {
     }
   }
 
-  async logout(req: Request, res: Response): Promise<void> {
+  async logout(_req: Request, res: Response): Promise<void> {
     // Since we're using stateless JWT, logout is handled client-side
     // by removing the token. Here we just return success.
     res.status(200).json({

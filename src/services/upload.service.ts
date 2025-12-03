@@ -1,4 +1,4 @@
-import { PrismaClient, Upload, UploadStatus, PayoutStatus } from '@prisma/client';
+import { PrismaClient, UploadStatus, PayoutStatus } from '@prisma/client';
 import { AppError } from '../middleware/errorHandler';
 import storageService from './storage.service';
 import qualityService from './quality.service';

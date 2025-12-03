@@ -216,12 +216,12 @@ export class CampaignService {
     });
   }
 
-  async getRecommendedCampaigns(userId: string, limit: number = 10) {
+  async getRecommendedCampaigns(_userId: string, limit: number = 10) {
     // Get user's country and previous uploads
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { countryCode: true },
-    });
+    // const user = await prisma.user.findUnique({
+    //   where: { id: userId },
+    //   select: { countryCode: true },
+    // });
 
     // Get active campaigns
     const campaigns = await prisma.campaign.findMany({
