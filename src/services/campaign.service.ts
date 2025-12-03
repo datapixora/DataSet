@@ -60,7 +60,9 @@ export class CampaignService {
     const skip = (page - 1) * limit;
 
     // Build where clause
-    const where: any = {};
+    const where: any = {
+      AND: [],
+    };
 
     if (filters.status) {
       where.status = filters.status;
@@ -71,10 +73,12 @@ export class CampaignService {
 
     // Filter by country if specified
     if (filters.countryCode) {
-      where.OR = [
-        { allowedCountries: { equals: null } }, // Global campaigns
-        { allowedCountries: { array_contains: filters.countryCode } },
-      ];
+      where.AND.push({
+        OR: [
+          { allowedCountries: { equals: null } }, // Global campaigns
+          { allowedCountries: { array_contains: filters.countryCode } },
+        ],
+      });
     }
 
     // Search by title
@@ -86,10 +90,17 @@ export class CampaignService {
     }
 
     // Check if campaign is still valid (not ended)
-    where.OR = [
-      { endsAt: null },
-      { endsAt: { gte: new Date() } },
-    ];
+    where.AND.push({
+      OR: [
+        { endsAt: null },
+        { endsAt: { gte: new Date() } },
+      ],
+    });
+
+    // If AND array is empty, remove it
+    if (where.AND.length === 0) {
+      delete where.AND;
+    }
 
     const [campaigns, total] = await Promise.all([
       prisma.campaign.findMany({
@@ -216,13 +227,13 @@ export class CampaignService {
     const campaigns = await prisma.campaign.findMany({
       where: {
         status: CampaignStatus.ACTIVE,
-        OR: [
-          { endsAt: null },
-          { endsAt: { gte: new Date() } },
-        ],
-        OR: [
-          { allowedCountries: null },
-          user?.countryCode ? { allowedCountries: { array_contains: user.countryCode } } : {},
+        AND: [
+          {
+            OR: [
+              { endsAt: null },
+              { endsAt: { gte: new Date() } },
+            ],
+          },
         ],
       },
       take: limit,
