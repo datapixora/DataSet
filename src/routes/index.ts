@@ -3,6 +3,7 @@ import authRoutes from './auth.routes';
 import campaignsRoutes from './campaigns.routes';
 import uploadsRoutes from './uploads.routes';
 import usersRoutes from './users.routes';
+import seedRoutes from './seed.routes';
 
 const router = Router();
 
@@ -20,5 +21,6 @@ router.use('/auth', authRoutes);
 router.use('/campaigns', campaignsRoutes);
 router.use('/uploads', uploadsRoutes);
 router.use('/users', usersRoutes);
+router.use('/seed', seedRoutes);
 
 export default router;
