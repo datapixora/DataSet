@@ -1,0 +1,239 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  phone         String?  @unique
+  passwordHash  String   @map("password_hash")
+
+  fullName      String?  @map("full_name")
+  countryCode   String?  @map("country_code") @db.VarChar(2)
+  language      String   @default("en") @db.VarChar(10)
+
+  // Statistics
+  totalUploads     Int     @default(0) @map("total_uploads")
+  approvedUploads  Int     @default(0) @map("approved_uploads")
+  rejectedUploads  Int     @default(0) @map("rejected_uploads")
+  totalEarned      Decimal @default(0) @map("total_earned") @db.Decimal(10, 2)
+  currentBalance   Decimal @default(0) @map("current_balance") @db.Decimal(10, 2)
+
+  // Reputation
+  qualityScore  Decimal @default(1.00) @map("quality_score") @db.Decimal(3, 2)
+  isVerified    Boolean @default(false) @map("is_verified")
+  isBanned      Boolean @default(false) @map("is_banned")
+
+  // Payout information
+  payoutMethod  String? @map("payout_method") @db.VarChar(50)
+  payoutDetails Json?   @map("payout_details")
+
+  // Timestamps
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  lastActiveAt DateTime? @map("last_active_at")
+
+  // Relations
+  uploads           Upload[]
+  transactions      Transaction[]
+  reviewedUploads   Upload[]        @relation("ReviewedBy")
+  adminActions      AdminAction[]
+
+  @@index([email])
+  @@index([qualityScore])
+  @@index([countryCode])
+  @@map("users")
+}
+
+model Campaign {
+  id          String   @id @default(uuid())
+  title       String   @db.VarChar(255)
+  description String?  @db.Text
+  instructions String? @db.Text
+
+  // Targeting
+  tags             Json  // required tags array
+  optionalTags     Json? @map("optional_tags")
+  requiredMetadata Json? @map("required_metadata")
+
+  // Geographic targeting
+  allowedCountries Json? @map("allowed_countries")
+
+  // Economics
+  basePayout  Decimal @map("base_payout") @db.Decimal(10, 2)
+  bonusPayout Decimal? @map("bonus_payout") @db.Decimal(10, 2)
+
+  // Limits
+  maxUploadsPerUser Int?     @map("max_uploads_per_user") @default(100)
+  totalBudget       Decimal? @map("total_budget") @db.Decimal(10, 2)
+  totalCollected    Int      @default(0) @map("total_collected")
+  targetQuantity    Int?     @map("target_quantity")
+
+  // Status
+  status   CampaignStatus @default(DRAFT)
+  priority Int            @default(0)
+
+  // Timing
+  startsAt  DateTime? @map("starts_at")
+  endsAt    DateTime? @map("ends_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  uploads Upload[]
+
+  @@index([status])
+  @@index([priority])
+  @@index([endsAt])
+  @@map("campaigns")
+}
+
+model Upload {
+  id         String  @id @default(uuid())
+  userId     String  @map("user_id")
+  campaignId String? @map("campaign_id")
+
+  // File information
+  filePath         String  @map("file_path") @db.VarChar(500)
+  fileSizeBytes    BigInt? @map("file_size_bytes")
+  mimeType         String? @map("mime_type") @db.VarChar(50)
+  originalFilename String? @map("original_filename") @db.VarChar(255)
+
+  // Image metadata
+  width    Int?
+  height   Int?
+  exifData Json? @map("exif_data")
+
+  // User-provided data
+  userTags  Json   @map("user_tags")
+  userNotes String? @map("user_notes") @db.Text
+
+  // AI-generated data
+  aiTags         Json?    @map("ai_tags")
+  aiQualityScore Decimal? @map("ai_quality_score") @db.Decimal(3, 2)
+  aiMetadata     Json?    @map("ai_metadata")
+
+  // Moderation
+  status          UploadStatus @default(PENDING)
+  reviewedById    String?      @map("reviewed_by")
+  reviewedAt      DateTime?    @map("reviewed_at")
+  rejectionReason String?      @map("rejection_reason") @db.Text
+
+  // Fraud detection
+  isDuplicate  Boolean @default(false) @map("is_duplicate")
+  duplicateOf  String? @map("duplicate_of")
+  fraudFlags   Json?   @map("fraud_flags")
+
+  // Earnings
+  payoutAmount Decimal       @default(0) @map("payout_amount") @db.Decimal(10, 2)
+  payoutStatus PayoutStatus  @default(PENDING) @map("payout_status")
+  paidAt       DateTime?     @map("paid_at")
+
+  // Timestamps
+  createdAt   DateTime  @default(now()) @map("created_at")
+  processedAt DateTime? @map("processed_at")
+
+  // Relations
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaign   Campaign?  @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  reviewedBy User?      @relation("ReviewedBy", fields: [reviewedById], references: [id])
+  duplicate  Upload?    @relation("DuplicateRelation", fields: [duplicateOf], references: [id])
+  duplicates Upload[]   @relation("DuplicateRelation")
+  transaction Transaction?
+
+  @@index([userId])
+  @@index([campaignId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([payoutStatus])
+  @@map("uploads")
+}
+
+model Tag {
+  id         String   @id @default(uuid())
+  name       String   @unique @db.VarChar(100)
+  category   String?  @db.VarChar(50)
+  usageCount Int      @default(0) @map("usage_count")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([category])
+  @@index([usageCount])
+  @@map("tags")
+}
+
+model Transaction {
+  id            String          @id @default(uuid())
+  userId        String          @map("user_id")
+  uploadId      String?         @unique @map("upload_id")
+
+  type         TransactionType
+  amount       Decimal         @db.Decimal(10, 2)
+  balanceAfter Decimal         @map("balance_after") @db.Decimal(10, 2)
+
+  description String? @db.Text
+  metadata    Json?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user   User    @relation(fields: [userId], references: [id])
+  upload Upload? @relation(fields: [uploadId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("transactions")
+}
+
+model AdminAction {
+  id         String   @id @default(uuid())
+  adminId    String   @map("admin_id")
+  actionType String   @map("action_type") @db.VarChar(50)
+  targetType String?  @map("target_type") @db.VarChar(50)
+  targetId   String?  @map("target_id")
+
+  details   Json?
+  ipAddress String? @map("ip_address") @db.Inet
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  admin User @relation(fields: [adminId], references: [id])
+
+  @@index([adminId])
+  @@index([createdAt])
+  @@map("admin_actions")
+}
+
+// Enums
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+enum UploadStatus {
+  PENDING
+  PROCESSING
+  APPROVED
+  REJECTED
+}
+
+enum PayoutStatus {
+  PENDING
+  PAID
+  REJECTED
+}
+
+enum TransactionType {
+  EARNING
+  WITHDRAWAL
+  BONUS
+  PENALTY
+  REFUND
+}

@@ -1,0 +1,55 @@
+services:
+  # Backend API Service
+  - type: web
+    name: visual-data-api
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install && npm run prisma:generate && npm run build
+    startCommand: npm run prisma:migrate && npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: visual-data-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+        sync: false
+      - key: REFRESH_TOKEN_SECRET
+        generateValue: true
+        sync: false
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: REFRESH_TOKEN_EXPIRES_IN
+        value: 30d
+      - key: CORS_ORIGIN
+        value: "*"
+      - key: MAX_FILE_SIZE_MB
+        value: 50
+      - key: MIN_IMAGE_WIDTH
+        value: 1920
+      - key: MIN_IMAGE_HEIGHT
+        value: 1080
+      - key: DEFAULT_BASE_PAYOUT
+        value: 0.50
+      - key: DEFAULT_BONUS_PAYOUT
+        value: 0.25
+      # Add these manually in Render Dashboard after creation:
+      # - R2_ACCOUNT_ID
+      # - R2_ACCESS_KEY_ID
+      # - R2_SECRET_ACCESS_KEY
+      # - R2_BUCKET_NAME
+      # - R2_PUBLIC_URL
+      # - R2_ENDPOINT
+
+databases:
+  # PostgreSQL Database
+  - name: visual-data-db
+    plan: free
+    databaseName: visual_data_platform
+    user: visualdata
