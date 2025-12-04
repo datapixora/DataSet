@@ -364,6 +364,56 @@ export class UploadService {
   /**
    * Get pending uploads for review (admin)
    */
+  async getAllUploads(page: number = 1, limit: number = 20, status?: string) {
+    const skip = (page - 1) * limit;
+
+    // Build where clause
+    const where: any = {};
+    if (status && ['PENDING', 'APPROVED', 'REJECTED'].includes(status.toUpperCase())) {
+      where.status = status.toUpperCase() as UploadStatus;
+    }
+
+    const [uploads, total] = await Promise.all([
+      prisma.upload.findMany({
+        where,
+        include: {
+          campaign: {
+            select: {
+              id: true,
+              title: true,
+            },
+          },
+          user: {
+            select: {
+              id: true,
+              email: true,
+              fullName: true,
+              qualityScore: true,
+              approvedUploads: true,
+              rejectedUploads: true,
+            },
+          },
+        },
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' }, // newest first
+      }),
+      prisma.upload.count({
+        where,
+      }),
+    ]);
+
+    return {
+      uploads,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
   async getPendingUploads(page: number = 1, limit: number = 20) {
     const skip = (page - 1) * limit;
 

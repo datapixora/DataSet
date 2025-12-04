@@ -93,6 +93,25 @@ export class UploadsController {
   }
 
   // Admin endpoints
+  async getAllUploads(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { page = '1', limit = '20', status } = req.query;
+
+      const result = await uploadService.getAllUploads(
+        parseInt(page as string, 10),
+        parseInt(limit as string, 10),
+        status as string | undefined
+      );
+
+      res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async getPendingUploads(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { page = '1', limit = '20' } = req.query;

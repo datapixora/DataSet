@@ -46,6 +46,14 @@ router.get(
 
 // Admin endpoints (TODO: add admin middleware)
 router.get(
+  '/admin/all',
+  authenticate,
+  paginationValidation,
+  validate,
+  uploadsController.getAllUploads
+);
+
+router.get(
   '/admin/pending',
   authenticate,
   paginationValidation,
