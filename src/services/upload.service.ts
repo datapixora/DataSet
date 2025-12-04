@@ -404,8 +404,15 @@ export class UploadService {
         }),
       ]);
 
+      // Convert BigInt to Number for JSON serialization
+      const serializedUploads = uploads.map((upload) => ({
+        ...upload,
+        fileSizeBytes: Number(upload.fileSizeBytes),
+        payoutAmount: upload.payoutAmount ? Number(upload.payoutAmount) : null,
+      }));
+
       return {
-        uploads,
+        uploads: serializedUploads,
         pagination: {
           page,
           limit,
