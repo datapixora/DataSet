@@ -17,6 +17,7 @@
 - [Overview](#overview)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
+- [System Overview](./docs/system-overview.md)
 - [Getting Started](#getting-started)
 - [API Documentation](#api-documentation)
 - [Database Schema](#database-schema)
