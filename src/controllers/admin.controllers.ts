@@ -8,16 +8,20 @@ const getEarningsStatsSchema = z.object({
   range: z.enum(['day', 'month', 'year']).default('month'),
 });
 
-export const getEarningsStats = async (req: Request, res: Response) => {
+export const getEarningsStats = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const query = getEarningsStatsSchema.safeParse(req.query);
 
     if (!query.success) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Invalid query parameters',
-        errors: query.error.errors,
+        errors: query.error.flatten(),
       });
+      return;
     }
 
     const { range } = query.data;
