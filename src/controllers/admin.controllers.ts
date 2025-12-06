@@ -63,6 +63,7 @@ export const getEarningsStats = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching earnings stats:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
+    return;
   }
 };
 
